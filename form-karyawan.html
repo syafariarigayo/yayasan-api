@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Form Pengisian Data Karyawan</title>
+</head>
+<body>
+  <h2>Form Pengisian Data Karyawan</h2>
+  <form id="form" enctype="multipart/form-data">
+    <label>Nama:</label><br>
+    <input type="text" name="nama" required><br><br>
+
+    <label>Tanggal Lahir:</label><br>
+    <input type="date" name="tgl_lahir"><br><br>
+
+    <label>Jenis Kelamin:</label><br>
+    <select name="jenis_kelamin">
+      <option value="">-Pilih-</option>
+      <option value="Laki-laki">Laki-laki</option>
+      <option value="Perempuan">Perempuan</option>
+    </select><br><br>
+
+    <label>Alamat:</label><br>
+    <textarea name="alamat"></textarea><br><br>
+
+    <label>No HP:</label><br>
+    <input type="text" name="no_hp"><br><br>
+
+    <label>Email:</label><br>
+    <input type="email" name="email"><br><br>
+
+    <label>Jabatan (ID):</label><br>
+    <input type="number" name="jabatan_id"><br><br>
+
+    <label>Upload KK (PDF):</label><br>
+    <input type="file" name="kk_pdf" accept="application/pdf"><br><br>
+
+    <label>Upload KTP (PDF):</label><br>
+    <input type="file" name="ktp_pdf" accept="application/pdf"><br><br>
+
+    <label>Upload CV (PDF):</label><br>
+    <input type="file" name="cv_pdf" accept="application/pdf"><br><br>
+
+    <label>Upload Foto:</label><br>
+    <input type="file" name="foto" accept="image/*"><br><br>
+
+    <button type="submit">Kirim</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+
+      const res = await fetch("http://localhost:3000/karyawan", {
+        method: "POST",
+        body: fd
+      });
+
+      const data = await res.json();
+      alert(JSON.stringify(data));
+    });
+  </script>
+</body>
+</html>
