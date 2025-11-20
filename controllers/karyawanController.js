@@ -183,35 +183,55 @@ exports.deleteKaryawan = async (req, res) => {
 
 // ==================== MAGANG CONTROLLER ====================
 
-// LIST MAGANG
+// LIST MAGANG - DIPERBAIKI
 exports.listMagang = async (req, res) => {
   try {
     const { hasil } = req.query;
     
+    // Query diperbaiki - mengambil dari tabel karyawan dengan LEFT JOIN ke magang_riwayat
     let sql = `
       SELECT 
         k.*,
-        m.magang_mulai,
-        m.magang_selesai,
-        m.hasil as status_magang,
-        m.nilai_akhir,
-        m.catatan
+        k.tanggal_mulai as magang_mulai,
+        k.status_magang,
+        mr.magang_selesai,
+        mr.hasil,
+        mr.nilai_akhir,
+        mr.catatan
       FROM karyawan k
-      LEFT JOIN magang_riwayat m ON k.id = m.karyawan_id
+      LEFT JOIN (
+        SELECT karyawan_id, MAX(id) as max_id
+        FROM magang_riwayat
+        GROUP BY karyawan_id
+      ) latest ON k.id = latest.karyawan_id
+      LEFT JOIN magang_riwayat mr ON latest.max_id = mr.id
       WHERE 1=1
     `;
     
     const params = [];
     
+    // Filter berdasarkan hasil verifikasi
     if (hasil && hasil !== "Semua") {
-      sql += " AND m.hasil = ?";
-      params.push(hasil);
+      if (hasil === "Sedang Berjalan") {
+        sql += " AND (mr.hasil IS NULL OR k.status_magang = 'MAGANG')";
+      } else if (hasil === "Lulus") {
+        sql += " AND (mr.hasil = 'Lulus' OR k.status_magang = 'LULUS')";
+      } else if (hasil === "Tidak Lulus") {
+        sql += " AND mr.hasil = 'Tidak Lulus'";
+      }
     }
     
-    sql += " ORDER BY m.magang_mulai DESC";
+    sql += " ORDER BY k.tanggal_mulai DESC, k.nama ASC";
     
     const [rows] = await pool.query(sql, params);
-    res.json(rows);
+    
+    // Format data untuk frontend
+    const formatted = rows.map(row => ({
+      ...row,
+      status_magang: row.hasil || row.status_magang || "Sedang Berjalan"
+    }));
+    
+    res.json(formatted);
   } catch (err) {
     console.error("LIST MAGANG ERROR:", err);
     res.status(500).json({ message: "Gagal mengambil data magang" });
